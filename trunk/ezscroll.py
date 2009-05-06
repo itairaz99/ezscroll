@@ -195,9 +195,7 @@ class EZScroll(object):
                    
         elif e.type == MOUSEBUTTONUP:
 
-            self.scrolling[self.active] = False
-            self.scrolling[1] = False
-            self.scrolling[0] = False        
+            self.scrolling[self.active] = False        
 
         self.scrollPane.blit(
         self.world,
