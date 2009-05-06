@@ -31,7 +31,7 @@ class EZScroll(object):
     Draws scrollbars and scrolled view onto a pane.
     After init, get ezScroll.scrollPane and blit it.
     In event handling code, call handleEvent(e) with mouse events.
-    Blit again. Voila.  Check out def example() below.
+    Blit again. Voila.  Check out ezexample.py
 
     """
 
@@ -81,7 +81,8 @@ class EZScroll(object):
             self.scrollPane = pygame.Surface(self.winRect.size).convert()
         self.scrollPane.fill(self.BgColor)
         worldSize = self.world.get_size()
-        
+
+        # Figure out which scrollbars and the space to leave
         numHorzSBs, numVertSBs = 0, 0
         if horzSBs == BOTH: numHorzSBs = 2
         elif horzSBs > -1:  numHorzSBs = 1
@@ -103,9 +104,11 @@ class EZScroll(object):
             (self.winRect.size[0] - removes[0]),
             (self.winRect.size[1] - removes[1]))
         
+        # reassign some methods, depending
         if not self.axes: EZScroll.handleEvent = EZScroll.noHandleEvents
         if pretty: EZScroll.draw = EZScroll.drawPretty
 
+        # make each scoll bar and draw initial view
         for ax in self.axes:
             if self.viewRect.size[ax] < worldSize[ax]:
 
@@ -125,6 +128,7 @@ class EZScroll(object):
                     (self.leftTop[ax] * self.ratios[ax]) + self.offsets[ax] )
                 self.knobs[ax].topleft = initKnobPosList
                 self.draw(ax)
+
         self.scrollPane.blit(
         self.world,
         self.offsets,
@@ -153,6 +157,7 @@ class EZScroll(object):
                     self.knobs[ax].collidepoint(e.pos) or
                     (True in self.scrolling and ax == self.active))
 
+                # scrolling happens here
                 if e.type == MOUSEMOTION and self.scrolling[ax] and hitOrUsing:
                     self.active = ax
                     if e.rel[ax] != 0:
@@ -201,17 +206,16 @@ class EZScroll(object):
          self.leftTop[1],
          self.viewRect.width,
          self.viewRect.height))
-      
-        totalOffsets = (self.leftTop[0] - self.offsets[0],
-                self.leftTop[1] - self.offsets[1])
-        try:
-            hitOrUsing = not self.viewRect.collidepoint(e.pos) or (
-            True in self.scrolling)        
-            return (hitOrUsing,
-                    (e.pos[0]+ totalOffsets[0], e.pos[1]+ totalOffsets[1]))
 
-        except AttributeError:
-            return True in self.scrolling, None
+        # return scrolling, e.pos plus scrolled minus offsets
+        try:
+            return (
+                self.scrolling[self.active],
+                (e.pos[0]+ self.leftTop[0] - self.offsets[0],
+                 e.pos[1]+ self.leftTop[1] - self.offsets[1]) )
+
+        except AttributeError: # was sent an event with no pos
+            return False, None
 
     def draw(self, ax):
 
