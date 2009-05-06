@@ -5,18 +5,24 @@ import ezscroll
 
 ScrSize = (200,400)
 Origin  = (0,0)
-Color   = (255,0,0)
+Red     = (255,0,0)
+Gray    = (200,200,200)
 ImageName = 'bgImage.bmp'
 
 def main():
     
     pygame.init()
     screen = pygame.display.set_mode(ScrSize)
-    image = loadImage(ImageName)
-    print image
+    world = loadImage(ImageName)
+
+    if not world:
+        pygame.display.set_caption(ImageName + " not found")
+        world = pygame.Surface((ScrSize[0]*2, ScrSize[1]*2))
+        world.fill(Gray)
+ 
 
     ez = ezscroll.EZScroll(
-        image,             # what needs to be scrolled
+        world,             # what needs to be scrolled
         screen.get_rect(), # porthole that limits view
         20,                # scroll thickness
         ezscroll.BOTH,     # H scrollbars: TOP, BOTTOM, BOTH, or NEITHER
@@ -29,7 +35,7 @@ def main():
         None)              # user-supplied scrollPane
 
     scrollPane = ez.scrollPane
-    screen.blit(scrollPane, (0,0))
+    screen.blit(scrollPane, Origin)
     pygame.display.flip()
 
     while 1:
@@ -42,7 +48,7 @@ def main():
         # Note: offset event pos by thickness and scrolled distance
         scrolling, adjPos = ez.handleEvent(event)
         if event.type == MOUSEBUTTONDOWN and adjPos and not scrolling:   
-           pygame.draw.circle(image, Color, adjPos, 10, 4)  
+           pygame.draw.circle(world, Red, adjPos, 10, 4)  
 
         screen.blit(scrollPane, Origin)
         pygame.display.flip()
@@ -65,10 +71,10 @@ def loadImage(ImageName):
         print "\nTrying to find it as if running from Python shell..."
         pathHere = os.path.abspath(os.path.dirname(os.path.realpath(__file__)))    
         return pygame.image.load(os.path.join(pathHere,ImageName)).convert()
-    except NameError: # name __file__ not recognized -- running from curdir
+    except: # name __file__ not recognized -- running from curdir
         print "Error again!"
 
-    else:
+    finally:
         print "\nNo luck finding your image file ",\
               ImageName," in the same dir as ezScroll.py"
         return None  
