@@ -4,8 +4,9 @@ import sys
 import pygame
 from pygame import *
 
-ScrSize = (200,600)
+ScrSize = (300,600)
 Origin  = (0,0)
+ImageName = 'bgImage.bmp'
 
 def main():
     """ A basic example of scrollbar code inline.
@@ -15,10 +16,17 @@ def main():
     pygame.init()
     screen      = pygame.display.set_mode(ScrSize)
     screenRect  = screen.get_rect()
-    image       = pygame.image.load('bgImage.bmp').convert()       
-  
-    imgRect     = image.get_rect()
-    ratio       = (1.0 * screenRect.width) / imgRect.width
+    world       = None
+    try:
+        world = pygame.image.load(ImageName).convert()
+    except:
+        print "Can't find ", ImageName
+        world = pygame.Surface((ScrSize[0]*2, ScrSize[1]*2))
+        world.fill((200,200,200))
+        pygame.display.set_caption(ImageName + " not found")
+        
+    worldRect     = world.get_rect()
+    ratio       = (1.0 * screenRect.width) / worldRect.width
     scrollThick = 20
     scroll      = pygame.Rect(
         screenRect.left,
@@ -51,7 +59,7 @@ def main():
 
                 
             screen.fill( (192,188,180) )
-            screen.blit(image, ( (bar.left / ratio) * -1 , 0) )
+            screen.blit(world, ( (bar.left / ratio) * -1 , 0) )
             pygame.draw.rect( screen, (180,180,180), scroll, 0 )
             pygame.draw.rect( screen, (140,140,140), bar.inflate(0,-5), 0 )
 
