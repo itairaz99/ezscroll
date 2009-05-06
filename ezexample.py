@@ -19,8 +19,8 @@ def main():
         image,             # what needs to be scrolled
         screen.get_rect(), # porthole that limits view
         20,                # scroll thickness
-        ezscroll.BOTH,   # which horiz scrollbars
-        ezscroll.BOTH,     # which vertical scrollbars
+        ezscroll.BOTH,     # H scrollbars: TOP, BOTTOM, BOTH, or NEITHER
+        ezscroll.BOTH,     # V scrollbars: LEFT, RIGHT, BOTH, or NEITHER
         Origin,            # initial position
         0,                 # internal padding
         True,              # use highlight and drop shadow
