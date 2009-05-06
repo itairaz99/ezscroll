@@ -6,7 +6,7 @@ from pygame import *
 
 ScrSize = (300,600)
 Origin  = (0,0)
-ImageName = 'bgImage.bmp'
+ImageName = 'bgImafgfhfge.bmp'
 
 def main():
     """ A basic example of scrollbar code inline.
