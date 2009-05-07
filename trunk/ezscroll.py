@@ -14,7 +14,7 @@ NEITHER = -1
 
 class EZScroll(object):
 
-    """ Defaults provided after vertSBs
+    """ A tightly bound set of scrolls.
 
     world       --  Surface, too-large view requires scrolling
     winRect     --  Rect,    porthole limits the view 
@@ -154,6 +154,7 @@ class EZScroll(object):
             
             for ax in self.axes:
                 knob = self.knobs[ax]
+                track = self.tracks[ax]
                 
                 hitOrUsing = (
                     knob.collidepoint(e.pos) or
@@ -162,18 +163,25 @@ class EZScroll(object):
                 # scrolling happens here
                 if e.type == MOUSEMOTION and self.scrolling[ax] and hitOrUsing:
 
-                    if self.tracks[ax].contains(knob.move(e.rel)):
+                    if e.rel[ax] != 0:
+                        
+                        move = e.rel[ax]
+                        move = max(move, track.topleft[ax] - knob.topleft[ax])
+                        move = min(move, track.bottomright[ax] - knob.bottomright[ax])
 
-                        pygame.draw.rect(self.scrollPane, self.BgColor, knob, 0)
-                        knoblist = list(knob.center)
-                        knoblist[ax] += e.rel[ax]                        
-                        knob.center = knoblist
+                        if move != 0:
+                            moves = [0,0]
+                            moves[ax] = move        
+                            knob.move_ip(moves)                       
 
-                        self.leftTop[ax] = (
-                            ((knob.center[ax] -
-                            knob.size[ax]/2) -
-                            self.offsets[ax]) / self.ratios[ax])
-                        self.draw(ax)
+                            pygame.draw.rect(self.scrollPane, (255,0,0), self.tracks[ax], 0)
+
+                            self.leftTop[ax] = (
+                                ((knob.center[ax] -
+                                knob.size[ax]/2) -
+                                self.offsets[ax]) / self.ratios[ax])
+                            self.draw(ax)
+                        
 
                 elif e.type == MOUSEBUTTONDOWN and \
                     knob.collidepoint(e.pos) and not \
