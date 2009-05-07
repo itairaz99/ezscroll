@@ -105,8 +105,8 @@ class EZScroll(object):
             (self.winRect.size[1] - removes[1]))
         
         # reassign some methods, depending
-        if not self.axes: EZScroll.handleEvent = EZScroll.noHandleEvents
-        if pretty: EZScroll.draw = EZScroll.drawPretty
+        if not self.axes: self.handleEvent = self.noHandleEvents
+        if pretty: self.draw = self.drawPretty
 
         # make each scoll bar and draw initial view
         for ax in self.axes:
@@ -153,45 +153,34 @@ class EZScroll(object):
         if e.type in [ MOUSEMOTION, MOUSEBUTTONDOWN ]:
             
             for ax in self.axes:
+                knob = self.knobs[ax]
+                
                 hitOrUsing = (
-                    self.knobs[ax].collidepoint(e.pos) or
+                    knob.collidepoint(e.pos) or
                     (True in self.scrolling and ax == self.active))
 
                 # scrolling happens here
                 if e.type == MOUSEMOTION and self.scrolling[ax] and hitOrUsing:
-                    self.active = ax
-                    if e.rel[ax] != 0:
-                        move = e.rel[ax]
-                        knob = self.knobs[ax]
+
+                    if self.tracks[ax].contains(knob.move(e.rel)):
+
                         pygame.draw.rect(self.scrollPane, self.BgColor, knob, 0)
-                        direction = cmp(move,0)
-                        trackFinish = self.offsets[ax]
-                        if direction > 0: trackFinish = self.tracks[ax].size[ax]
+                        knoblist = list(knob.center)
+                        knoblist[ax] += e.rel[ax]                        
+                        knob.center = knoblist
 
-                        # index tells whether to work from knob topleft or bottom right and
-                        # consequently, also whether to add the offset from (0,0)
-                        index = direction+2 >> 1 # todo double-check 64-bit platform
-                        # The [][] id top if scrolling up, right if going right                     
-                        remaining = (trackFinish -
-                            (knob.topleft, knob.bottomright)[index][ax] +
-                            (self.offsets[ax] * index)) * direction
-
-                        barCenterList = [knob.center[0], knob.center[1]]
-                        if abs(move) < remaining: barCenterList[ax] +=  move
-                        else: barCenterList[ax] += ( direction * remaining )
-                        knob.center = barCenterList
                         self.leftTop[ax] = (
                             ((knob.center[ax] -
-                              knob.size[ax]/2) -
-                              self.offsets[ax]) / self.ratios[ax])
+                            knob.size[ax]/2) -
+                            self.offsets[ax]) / self.ratios[ax])
                         self.draw(ax)
 
                 elif e.type == MOUSEBUTTONDOWN and \
-                    self.knobs[ax].collidepoint(e.pos) and not \
+                    knob.collidepoint(e.pos) and not \
                     self.viewRect.collidepoint(e.pos):
 
                     self.scrolling[ax] = True
-                    self.active  =  ax
+                    self.active = ax
                    
         elif e.type == MOUSEBUTTONUP:
 
@@ -236,7 +225,7 @@ class EZScroll(object):
              self.knobs[ax].height - 2*self.pad),
             0)
 
-        # Draw a rect around viewRect that trims the scrollbars away from the view.
+        # Draw a rect around viewRect that trims the scrollbars away from view.
         pygame.draw.rect(
             self.scrollPane,
             self.BgColor,
