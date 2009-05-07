@@ -6,10 +6,11 @@ from pygame import *
 
 ScrSize = (300,600)
 Origin  = (0,0)
+Gray    = (200,200,200)
 ImageName = 'bgImage.bmp'
 
 def main():
-    """ A basic example of scrollbar code inline.
+    """ A basic example of scrollknob code inline.
         Does not use ezscroll module.
     """
     
@@ -17,24 +18,25 @@ def main():
     screen      = pygame.display.set_mode(ScrSize)
     screenRect  = screen.get_rect()
     world       = None
+
     try:
         world = pygame.image.load(ImageName).convert()
     except:
         print "Can't find ", ImageName
         world = pygame.Surface((ScrSize[0]*2, ScrSize[1]*2))
-        world.fill((200,200,200))
+        world.fill(Gray)
         pygame.display.set_caption(ImageName + " not found")
         
-    worldRect     = world.get_rect()
+    worldRect   = world.get_rect()
     ratio       = (1.0 * screenRect.width) / worldRect.width
     scrollThick = 20
-    scroll      = pygame.Rect(
+    track = pygame.Rect(
         screenRect.left,
         screenRect.bottom - scrollThick,
         screenRect.width, scrollThick )
     
-    bar         = pygame.Rect(scroll)  
-    bar.width   = scroll.width * ratio
+    knob        = pygame.Rect(track)  
+    knob.width   = track.width * ratio
     scrolling   = False
 
     while 1:
@@ -46,12 +48,16 @@ def main():
                 sys.exit()            
             
             elif ( event.type == MOUSEMOTION and
-                 scrolling and
-                 scroll.contains(bar.move(event.rel[0],0)) ):
-                
-                bar.center = bar.center[0] + event.rel[0], bar.center[1]
+                 scrolling):
 
-            elif event.type == MOUSEBUTTONDOWN and bar.collidepoint(event.pos):
+                if event.rel[0] != 0:
+                    move = max(event.rel[0], track.left - knob.left)
+                    move = min(move, track.right - knob.right)
+
+                    if move != 0:
+                        knob.move_ip((move, 0))
+                            
+            elif event.type == MOUSEBUTTONDOWN and knob.collidepoint(event.pos):
                 scrolling = True                    
                     
             elif event.type == MOUSEBUTTONUP:
@@ -59,9 +65,9 @@ def main():
 
                 
             screen.fill( (192,188,180) )
-            screen.blit(world, ( (bar.left / ratio) * -1 , 0) )
-            pygame.draw.rect( screen, (180,180,180), scroll, 0 )
-            pygame.draw.rect( screen, (140,140,140), bar.inflate(0,-5), 0 )
+            screen.blit(world, ( (knob.left / ratio) * -1 , 0) )
+            pygame.draw.rect( screen, (180,180,180), track, 0 )
+            pygame.draw.rect( screen, (140,140,140), knob.inflate(0,-5), 0 )
 
             pygame.display.flip()
 
