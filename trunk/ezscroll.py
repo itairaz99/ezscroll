@@ -239,7 +239,8 @@ class EZScroll(object):
             self.BgColor,
             self.viewRect,
             2 * self.pad + 1)
-       
+
+            
     def drawPretty(self, ax):
 
         """ Used internally. Draws drop-shadowed knob if not pretty.
@@ -257,14 +258,21 @@ class EZScroll(object):
         hiRect = pygame.Rect((knob.left + self.pad, knob.top + self.pad), size)
         loRect = hiRect.inflate(-1,-1).move(1,1)
         fgRect = loRect.inflate(-1,-1)
-        pygame.draw.rect(self.scrollPane, self.HiColor, hiRect, 1)            
-        pygame.draw.rect(self.scrollPane, self.LoColor, loRect, 1)            
-        pygame.draw.rect(self.scrollPane, self.FgColor, fgRect, 0)            
+        rectAggr = ( (self.HiColor, hiRect, 1),
+                     (self.LoColor, loRect, 1),
+                     (self.FgColor, fgRect, 0) )
+
+        self.drawRectAggr(rectAggr)
         moves = [0,0]
         moves[oppAxis] = knob.size[oppAxis] - size[oppAxis] - (2*self.pad)
-        hiRect.move_ip(moves)
-        loRect.move_ip(moves)
-        fgRect.move_ip(moves)
-        pygame.draw.rect(self.scrollPane, self.HiColor, hiRect, 1)
-        pygame.draw.rect(self.scrollPane, self.LoColor, loRect, 1)
-        pygame.draw.rect(self.scrollPane, self.FgColor, fgRect, 0)   
+        self.moveRectAggr(rectAggr, moves)
+        self.drawRectAggr(rectAggr)
+           
+        
+    def moveRectAggr(self, aggregate, moves):
+        for item in aggregate:
+            item[1].move_ip(moves)
+
+    def drawRectAggr(self, aggregate):
+        for item in aggregate:
+            pygame.draw.rect(self.scrollPane,item[0],item[1], item[2])
