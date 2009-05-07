@@ -174,7 +174,7 @@ class EZScroll(object):
                             moves[ax] = move        
                             knob.move_ip(moves)                       
 
-                            pygame.draw.rect(self.scrollPane, (255,0,0), self.tracks[ax], 0)
+                            pygame.draw.rect(self.scrollPane, self.BgColor, self.tracks[ax], 0)
 
                             self.leftTop[ax] = (
                                 ((knob.center[ax] -
