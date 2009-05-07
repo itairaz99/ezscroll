@@ -14,9 +14,8 @@ ImageName = 'bgImage.bmp'
 def main():
     """ Sample program for the ezscroll module.
 
-    Tweak! the ez constructor arguments.
-    See! how the event.pos is offset to draw circles.
-    Wonder! at the amout of comments
+    Tweak the ez constructor arguments.
+
     """
     
     pygame.init()
@@ -38,7 +37,7 @@ def main():
         ezscroll.BOTH,     # H scrollbars: TOP, BOTTOM, BOTH, or NEITHER
         ezscroll.BOTH,     # V scrollbars: LEFT, RIGHT, BOTH, or NEITHER
         Origin,            # initial position
-        1,                 # internal padding
+        2,                 # internal padding
         True,              # use highlight and drop shadow
         None,              # (trackColor, knobColor)
         None,              # (highlightColor, shadowColor)
