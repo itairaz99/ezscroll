@@ -16,11 +16,13 @@ W='W'
 
 def examples():
     """ Two examples of how to use ezscroll.
-        One is a scrollbar, the other is a scrollpane.
-        The scrollpane handles some things like offsets better,
-        puts the scrollbars in a sprite group, and blits the world.
-        If you just want one scrollbar, still may be easier to
-        use ScrollPane and pass [S] or [E], etc.
+        
+    One is a scrollbar, the other is a scrollpane.
+    Call update() and draw() like a sprite group.
+    The scrollpane handles some things like offsets better,
+    puts the scrollbars in a sprite group, and blits the world.
+    If you just want one scrollbar, still may be easier to
+    use ScrollPane and pass [S] or [E], etc.
     """
     exampleOneRunning = True
     exampleTwoRunning = True    
