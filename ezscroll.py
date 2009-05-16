@@ -1,278 +1,242 @@
 #! %PYTHONPATH%\python
+import os
+import sys
+import pygame
+from pygame import *
 
-import pygame.display
-import pygame.draw
-from pygame import Rect, Surface
-from pygame.locals import MOUSEBUTTONUP, MOUSEMOTION, MOUSEBUTTONDOWN
+ScrSize = (300,600)
+Origin  = (0,0)
+Gray    = (200,200,200)
+FGCOLOR = 220,220,200
+BGCOLOR = 230,230,230
+N='N'
+S='S'
+E='E'
+W='W'
 
-LEFT = 0
-RIGHT = 1
-TOP = 0
-BOTTOM = 1
-BOTH = 2
-NEITHER = -1
-
-class EZScroll(object):
-
-    """ A tightly bound set of scrolls.
-
-    world       --  Surface, too-large view requires scrolling
-    winRect     --  Rect,    porthole limits the view 
-    scrollThick --  int,     thickness of scrollbars
-    horzSBs     --  int,     TOP, BOTTOM, NEITHER, or BOTH bars
-    vertSBs     --  int,     LEFT, RIGHT, NEITHER, or BOTH bars
-    initPos     --  tuple,   initial scrollbar position
-    pad         --  int,     bg space around knobs, default 0
-    pretty      --  bool,    draw knobs with drop shadow, highlight
-    fgBgColors  --  tuples,  scrollbar knob and track colors.
-    hiLoColors  --  tuples,  highlight and drop shadow colors
-    retSurface  --  Surface, user can provide their own pane 
-    
-    Draws scrollbars and scrolled view onto a pane.
-    After init, get ezScroll.scrollPane and blit it.
-    In event handling code, call handleEvent(e) with mouse events.
-    Blit again. Voila.  Check out ezexample.py
-
+def examples():
+    """ Two examples of how to use ezscroll.
+        One is a scrollbar, the other is a scrollpane.
+        The scrollpane handles some things like offsets better,
+        puts the scrollbars in a sprite group, and blits the world.
+        If you just want one scrollbar, still may be easier to
+        use ScrollPane and pass [S] or [E], etc.
     """
+    exampleOneRunning = True
+    exampleTwoRunning = True    
+    pygame.init()
+    screen = pygame.display.set_mode(ScrSize)
+    bg = pygame.Surface(ScrSize).convert()
+    bg.fill(Gray)    
+    world = pygame.Surface((ScrSize[0]*2, ScrSize[1]*2))
+    world.fill(Gray)
+    for x in xrange(100, world.get_size()[0], 200):
+        for y in xrange(100, world.get_size()[1], 200):
+            pygame.draw.circle(world, (225,34,43), (x,y), 100, 10)          
 
-    FgColor = (200,200,200)
-    BgColor = (225, 225, 225)
-    HiColor = (255,255,255)
-    LoColor = (40,40,40)
-    FgBgColors = (FgColor, BgColor)
-    HiLoColors = (HiColor, LoColor)
+    ###  EXAMPLE 1
+    pygame.display.set_caption("Example 1: ScrollBar")
+    thick = 30
+    scrollRect = pygame.Rect(0, 0, ScrSize[0], thick)
+    excludes = ((0, thick), ScrSize) # limits start-scrolling area
+    sb = ScrollBar(world.get_width(), scrollRect, bg, 0, excludes)    
+    group = pygame.sprite.RenderPlain()
+    group.add(sb)
+    screen.blit(bg, Origin)
+    pygame.display.flip()
+    while exampleOneRunning:
+        event = pygame.event.wait()
+        if event.type is QUIT:
+            exampleOneRunning = False        
+        sb.update(event)
+        sb.draw(bg)
+        bg.blit(
+            world,
+            (0,thick),
+            (sb.get_offsets(),(ScrSize[0],ScrSize[1]-thick)))
+        screen.blit(bg,Origin)
+        pygame.display.flip()
+
+    ###  EXAMPLE 2
+    pygame.display.set_caption("Example 2: ScrollPane")
+    initRect = pygame.Rect(0 ,0,ScrSize[0],ScrSize[1])
+    sp = ScrollPane(world.get_size(), initRect, world, bg, [N, S, E, W])
+    sp.draw(bg)
+    screen.blit(bg,Origin)
+    pygame.display.flip()
+    while exampleTwoRunning:
+        event = pygame.event.wait()
+        if event.type is QUIT:
+            exampleTwoRunning = False        
+        sp.update(event)
+        sp.draw(bg)
+        screen.blit(bg,Origin)
+        pygame.display.flip()
+
+    pygame.quit()
+    sys.exit(0)
+
+
+class ScrollPane():
+    """ Coordinates two ScrollBars """
+    
+    def __init__(
+        self,
+        worldSize,
+        initRect,
+        world,
+        pane=None,
+        nsew=[S,E],
+        thick=20,
+        fgColor=FGCOLOR,
+        bgColor=BGCOLOR):
+
+        self.world = world
+        self.pane = pane
+        self.group = pygame.sprite.RenderPlain()
+        self.nsew = nsew
+        self.thick = thick
+        self.viewRect = win = self.initViewRect(initRect, self.nsew, self.thick)
+        self.sbs = []
+        if E in self.nsew or W in self.nsew:
+            scrollRect = pygame.Rect(0, win.top, initRect.width, win.height)
+            sb = ScrollBar(worldSize[1], scrollRect, self.pane, 1,
+                win.inflate(0, self.thick).move(0, -self.thick), fgColor, bgColor)
+            self.sbs.append(sb)
+            self.group.add(sb)        
+        if N in self.nsew or S in self.nsew:
+            scrollRect = pygame.Rect(win.left, 0, win.width, initRect.height)
+            sb = ScrollBar(worldSize[0], scrollRect, self.pane, 0,
+                win.inflate(self.thick, 0).move(-self.thick, 0), fgColor, bgColor)
+            self.sbs.append(sb)
+            self.group.add(sb)
+
+    def initViewRect(self, initRect, nsew, thick):
+        """ Subtract width of scrollbars from viewable area """
+        win = pygame.Rect(initRect)
+        if N in nsew:
+            win.top = thick
+            win.height -= thick            
+        if S in nsew:
+            win.height -= thick         
+        if E in nsew:
+            win.width -= thick
+        if W in nsew:
+            win.left = thick
+            win.width -= thick               
+        return win
+
+    def clear(self, bg, archive):
+        pass
+        
+    def update(self, event):
+        for sb in self.sbs:
+            sb.update(event)
+            if sb.scrolling:
+                break
+                
+    def draw(self, surface):
+        offsets = [0,0]
+        for sb in self.sbs:
+            offsets[sb.axis] = sb.get_offsets()[sb.axis]
+            sb.draw(surface)
+        surface.blit(self.world, self.viewRect.topleft, (offsets, self.viewRect.size))
+        return self.pane.get_rect()
+
+    def get_pane(self):
+        """ Called by end user to get the scroll pane """
+        return self.pane
+
+
+class ScrollBar(pygame.sprite.Sprite):
+    """ Same interface as sprite.Group.
+    Get result of update() in pixels scrolled, from get_offsets()
+    """
 
     def __init__(
         self,
-        world,
-        winRect,
-        scrollThick,
-        horzSBs,
-        vertSBs,
-        initPos=(0,0),
-        pad=0,
-        pretty=False,                 
-        fgBgColors=FgBgColors,
-        hiLoColors=HiLoColors,
-        retSurface=None
-        ):
-
-        self.world      = world
-        self.winRect    = winRect
-        self.thick      = scrollThick
-        self.leftTop    = list(initPos)
-        self.pad        = pad    
-        self.axes       = [0,1]
-        self.tracks     = [None, None]
-        self.knobs      = [None, None]
-        self.ratios     = [0.0, 0.0]
-        self.offsets    = [0,0]
-        self.windowSize = list(winRect.size)     
-        self.scrolling  = [False, False]
-        self.active     = 0
-
-        if fgBgColors and fgBgColors[0]: self.FgColor = fgBgColors[0] 
-        if fgBgColors and fgBgColors[1]: self.BgColor = fgBgColors[1]
-        if hiLoColors and hiLoColors[0]: self.HiColor = hiLoColors[0]
-        if hiLoColors and hiLoColors[1]: self.LoColor = hiLoColors[1]
-            
-        self.scrollPane = retSurface
-        if retSurface is None:
-            self.scrollPane = pygame.Surface(self.winRect.size).convert()
-        self.scrollPane.fill(self.BgColor)
-        worldSize = self.world.get_size()
-
-        # Figure out which scrollbars and the space to leave
-        numHorzSBs, numVertSBs = 0, 0
-        if horzSBs == BOTH: numHorzSBs = 2
-        elif horzSBs > -1:  numHorzSBs = 1
-        if vertSBs == BOTH: numVertSBs = 2
-        elif vertSBs > -1:  numVertSBs = 1
+        worldDim,
+        initRect,
+        surface=None,
+        axis=0,
+        exclude=(0,0,0,0),
+        fgColor=FGCOLOR,
+        bgColor=BGCOLOR):
         
-        removes = [numVertSBs * self.thick, numHorzSBs * self.thick]
-        tooMuchSpaceH = self.winRect.size[0] - removes[0] > worldSize[0]
-        tooMuchSpaceV = self.winRect.size[1] - removes[1] > worldSize[1]
-        if not tooMuchSpaceH and (numHorzSBs == BOTH or horzSBs == TOP):
-            self.offsets[1] = self.thick
-        if not tooMuchSpaceV and (numVertSBs == BOTH or vertSBs == LEFT):
-            self.offsets[0] = self.thick
-        if tooMuchSpaceV or numVertSBs == 0: del self.axes[1]
-        if tooMuchSpaceH or numHorzSBs == 0: del self.axes[0]        
-        self.viewRect = pygame.Rect(
-            self.offsets[0],
-            self.offsets[1],
-            (self.winRect.size[0] - removes[0]),
-            (self.winRect.size[1] - removes[1]))
+        pygame.sprite.Sprite.__init__(self)
+        self.initTopleft = initRect.topleft
+        self.exclude = pygame.Rect(exclude)
+        self.image = pygame.Surface(initRect.size).convert()      
+        self.rect = self.image.get_rect()
+        self.surface = surface
+        self.axis = axis
+        self.fgColor = fgColor
+        self.bgColor = bgColor        
+        self.knob = pygame.Rect(self.rect)
+        self.ratio = 1.0* initRect.size[self.axis] / worldDim
+        knoblist = list(self.knob.size)
+        knoblist[self.axis] = self.knob.size[self.axis] * self.ratio
+        self.knob.size = knoblist
+        self.draw(self.surface)
+        self.scrolling = False
+        self.leftTop = [0,0]
+
+    def update(self, event):
+        if event and event.type in [MOUSEMOTION, MOUSEBUTTONUP, MOUSEBUTTONDOWN]:
+
+            if event.type is MOUSEMOTION and self.scrolling:
+                step = self.scroll(event.rel)
+                if step != 0:
+                    self.leftTop[self.axis] += (step / self.ratio)
+
+            elif event.type is MOUSEBUTTONDOWN and (
+                self.knob.collidepoint(event.pos) and (
+                    self.exclude and not (
+                        self.exclude.collidepoint(event.pos)))):
+                self.scrolling = True                
+
+            elif event.type is MOUSEBUTTONUP:
+                self.scrolling = False
         
-        # reassign some methods, depending
-        if not self.axes: self.handleEvent = self.noHandleEvents
-        if pretty: self.draw = self.drawPretty
+    def scroll(self, rel):
+        """ Moves knob based on [x,y] change like mouse event rel
+        Called internally by update()
+        """
+        if rel and rel[self.axis] != 0:
+            axis = self.axis
+            relax = rel[axis]
+            rect = self.rect
+            knob = self.knob
+            # limit knob travel
+            step = max(relax, rect.topleft[axis] - knob.topleft[axis])
+            step = min(step, rect.bottomright[axis] - knob.bottomright[axis])
+            if step != 0:
+                steps = [0,0]
+                steps[axis] = step
+                self.knob.move_ip(steps)
+                return step
+        return 0      
 
-        # make each scoll bar and draw initial view
-        for ax in self.axes:
-            if self.viewRect.size[ax] < worldSize[ax]:
-
-                leftOrTop = [self.winRect.left, self.winRect.top]
-                leftOrTop[ax] = self.offsets[ax]
-                wideOrHigh = [self.winRect.width, self.winRect.height]
-                wideOrHigh[ax] -= removes[ax]   
-                self.windowSize[ax] -= removes[ax]
-                self.tracks[ax] = pygame.Rect((leftOrTop, wideOrHigh))
-                self.knobs[ax] = pygame.Rect(self.tracks[ax])
-                self.ratios[ax] = 1.0* self.tracks[ax].size[ax] / worldSize[ax]
-                barSizeList = list(self.knobs[ax].size)
-                barSizeList[ax] = self.knobs[ax].size[ax] * self.ratios[ax]
-                self.knobs[ax].size = barSizeList
-                initKnobPosList = [0,0]
-                initKnobPosList[ax] = (
-                    (self.leftTop[ax] * self.ratios[ax]) + self.offsets[ax] )
-                self.knobs[ax].topleft = initKnobPosList
-                self.draw(ax)
-
-        self.scrollPane.blit(
-        self.world,
-        self.offsets,
-        (self.leftTop[0],
-         self.leftTop[1],
-         self.viewRect.width,
-         self.viewRect.height))
-      
-
-    #skip handling events at all if there are no scrollbars in self.axes
-    def noHandleEvents(self, e):  return False, None
-
-    def handleEvent(self, e):
+    def draw(self, surface):
+        """ Blits sprite image to a surface if it exists.
+        Called by update()>updateViews() if self.auto is True.
+        Also mimics group.draw, returning rectangle.
+        """
+        pygame.draw.rect(self.image, self.bgColor, self.rect, 0) 
+        pygame.draw.rect(self.image, self.fgColor, self.knob, 0)
         
-        """ Called by user code in their event handling of mouse actions.
+        if surface:
+            return surface.blit(self.image, self.initTopleft)
+        else:
+            return None
 
-        Polls the different axis scrollbars for scroll values,
-        then draws the scrollbars, and the scrolled view onto the scrollPane.
-        See def example() below.
+    def get_offsets(self):
+        """ Called by end user to get pixels scrolled,
+        as result of update()
 
         """
-        if e.type in [ MOUSEMOTION, MOUSEBUTTONDOWN ]:
-            
-            for ax in self.axes:
-                knob = self.knobs[ax]
-                track = self.tracks[ax]
-                
-                hitOrUsing = (
-                    knob.collidepoint(e.pos) or
-                    (True in self.scrolling and ax == self.active))
+        return self.leftTop
 
-                # scrolling happens here
-                if e.type == MOUSEMOTION and self.scrolling[ax] and hitOrUsing:
 
-                    if e.rel[ax] != 0:
-                        
-                        move = e.rel[ax]
-                        move = max(move, track.topleft[ax] - knob.topleft[ax])
-                        move = min(move, track.bottomright[ax] - knob.bottomright[ax])
 
-                        if move != 0:
-                            moves = [0,0]
-                            moves[ax] = move        
-                            knob.move_ip(moves)                       
-
-                            pygame.draw.rect(self.scrollPane, self.BgColor, self.tracks[ax], 0)
-
-                            self.leftTop[ax] = (
-                                ((knob.center[ax] -
-                                knob.size[ax]/2) -
-                                self.offsets[ax]) / self.ratios[ax])
-                            self.draw(ax)
-                        
-
-                elif e.type == MOUSEBUTTONDOWN and \
-                    knob.collidepoint(e.pos) and not \
-                    self.viewRect.collidepoint(e.pos):
-
-                    self.scrolling[ax] = True
-                    self.active = ax
-                   
-        elif e.type == MOUSEBUTTONUP:
-
-            self.scrolling[self.active] = False        
-
-        self.scrollPane.blit(
-        self.world,
-        self.offsets,
-        (self.leftTop[0],
-         self.leftTop[1],
-         self.viewRect.width,
-         self.viewRect.height))
-
-        # return scrolling, e.pos plus scrolled minus offsets
-        try:
-            return (
-                self.scrolling[self.active],
-                (e.pos[0]+ self.leftTop[0] - self.offsets[0],
-                 e.pos[1]+ self.leftTop[1] - self.offsets[1]) )
-
-        except AttributeError: # was sent an event with no pos
-            return False, None
-
-    def draw(self, ax):
-
-        """ Called internally. Draws flat bars if pretty is False.
-
-        This drawing method only requires the rendering of 3 rects.
-        One for each knob, and one that goes around the view rect
-        which is drawn in the track color to trim them away.
-        Comment out the blit of world here to see exactly.
-
-        """
-
-        #draw the knob
-        pygame.draw.rect(
-            self.scrollPane,
-            self.FgColor,
-            (self.knobs[ax].left + self.pad,
-             self.knobs[ax].top + self.pad,
-             self.knobs[ax].width - 2*self.pad,
-             self.knobs[ax].height - 2*self.pad),
-            0)
-
-        # Draw a rect around viewRect that trims the scrollbars away from view.
-        pygame.draw.rect(
-            self.scrollPane,
-            self.BgColor,
-            self.viewRect,
-            2 * self.pad + 1)
-
-            
-    def drawPretty(self, ax):
-
-        """ Used internally. Draws drop-shadowed knob if not pretty.
-
-        This drawing method requires the rendering of 6 rects.
-        Three for each knob end, overlapping HiColor, LoColor, FgColor
-        Both are drawn regardless if hidden.
-        Comment out the blit of world here to see exactly.
-
-        """
-        oppAxis = cmp(0,ax)+1
-        knob = self.knobs[ax]
-        size = [knob.width - (self.pad *2), knob.height - (self.pad * 2)]
-        size[oppAxis] = self.thick - (2*self.pad)
-        hiRect = pygame.Rect((knob.left + self.pad, knob.top + self.pad), size)
-        loRect = hiRect.inflate(-1,-1).move(1,1)
-        fgRect = loRect.inflate(-1,-1)
-        rectAggr = ( (self.HiColor, hiRect, 1),
-                     (self.LoColor, loRect, 1),
-                     (self.FgColor, fgRect, 0) )
-
-        self.drawRectAggr(rectAggr)
-        moves = [0,0]
-        moves[oppAxis] = knob.size[oppAxis] - size[oppAxis] - (2*self.pad)
-        self.moveRectAggr(rectAggr, moves)
-        self.drawRectAggr(rectAggr)
-           
-        
-    def moveRectAggr(self, aggregate, moves):
-        for item in aggregate:
-            item[1].move_ip(moves)
-
-    def drawRectAggr(self, aggregate):
-        for item in aggregate:
-            pygame.draw.rect(self.scrollPane,item[0],item[1], item[2])
+if __name__ == '__main__': examples()
