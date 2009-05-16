@@ -7,8 +7,8 @@ from pygame import *
 ScrSize = (300,600)
 Origin  = (0,0)
 Gray    = (200,200,200)
-ImageName = 'bgImage.bmp'
-
+Red     = (250,20,20)
+Blue    = (20,20,100)
 def main():
     """ A basic example of scrollknob code inline.
         Does not use ezscroll module.
@@ -17,15 +17,11 @@ def main():
     pygame.init()
     screen      = pygame.display.set_mode(ScrSize)
     screenRect  = screen.get_rect()
-    world       = None
-
-    try:
-        world = pygame.image.load(ImageName).convert()
-    except:
-        print "Can't find ", ImageName
-        world = pygame.Surface((ScrSize[0]*2, ScrSize[1]*2))
-        world.fill(Gray)
-        pygame.display.set_caption(ImageName + " not found")
+    world = pygame.Surface((ScrSize[0]*2, ScrSize[1]*2))
+    world.fill(Gray)
+    for x in xrange(100, world.get_size()[0], 200):
+        for y in xrange(100, world.get_size()[1], 200):
+            pygame.draw.circle(world, Red, (x,y), 100, 10)          
         
     worldRect   = world.get_rect()
     ratio       = (1.0 * screenRect.width) / worldRect.width
@@ -58,7 +54,7 @@ def main():
                         knob.move_ip((move, 0))
                             
             elif event.type == MOUSEBUTTONDOWN and knob.collidepoint(event.pos):
-                scrolling = True                    
+                scrolling = True
                     
             elif event.type == MOUSEBUTTONUP:
                 scrolling = False
@@ -66,8 +62,8 @@ def main():
                 
             screen.fill( (192,188,180) )
             screen.blit(world, ( (knob.left / ratio) * -1 , 0) )
-            pygame.draw.rect( screen, (180,180,180), track, 0 )
-            pygame.draw.rect( screen, (140,140,140), knob.inflate(0,-5), 0 )
+            pygame.draw.rect( screen, Gray, track, 0 )
+            pygame.draw.rect( screen, Blue, knob.inflate(0,-5), 0 )
 
             pygame.display.flip()
 
