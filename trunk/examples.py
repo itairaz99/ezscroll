@@ -8,7 +8,7 @@ Origin  = (0,0)
 Gray    = (200,200,200)
 
 def examples():
-    """ Two examples of how to use ezscroll.
+    """ Examples of how to use ezscroll.
     One is a scrollpane, the other is a scrollbar.
     The scrollpane handles some things like offsets,
     puts the scrollbars in a sprite group, and blits the world.
