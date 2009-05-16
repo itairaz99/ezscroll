@@ -16,13 +16,11 @@ W='W'
 
 def examples():
     """ Two examples of how to use ezscroll.
-        
-    One is a scrollbar, the other is a scrollpane.
-    Call update() and draw() like a sprite group.
-    The scrollpane handles some things like offsets better,
-    puts the scrollbars in a sprite group, and blits the world.
-    If you just want one scrollbar, still may be easier to
-    use ScrollPane and pass [S] or [E], etc.
+        One is a scrollbar, the other is a scrollpane.
+        The scrollpane handles some things like offsets better,
+        puts the scrollbars in a sprite group, and blits the world.
+        If you just want one scrollbar, still may be easier to
+        use ScrollPane and pass [S] or [E], etc.
     """
     exampleOneRunning = True
     exampleTwoRunning = True    
@@ -52,9 +50,7 @@ def examples():
             exampleOneRunning = False        
         sb.update(event)
         sb.draw(bg)
-        bg.blit(
-            world,
-            (0,thick),
+        bg.blit(world, (0,thick),
             (sb.get_offsets(),(ScrSize[0],ScrSize[1]-thick)))
         screen.blit(bg,Origin)
         pygame.display.flip()
@@ -62,7 +58,7 @@ def examples():
     ###  EXAMPLE 2
     pygame.display.set_caption("Example 2: ScrollPane")
     initRect = pygame.Rect(0 ,0,ScrSize[0],ScrSize[1])
-    sp = ScrollPane(world.get_size(), initRect, world, bg, [N, S, E, W])
+    sp = ScrollPane(world.get_size(), initRect, world, bg, [S, E, W, N])
     sp.draw(bg)
     screen.blit(bg,Origin)
     pygame.display.flip()
@@ -103,13 +99,13 @@ class ScrollPane():
         if E in self.nsew or W in self.nsew:
             scrollRect = pygame.Rect(0, win.top, initRect.width, win.height)
             sb = ScrollBar(worldSize[1], scrollRect, self.pane, 1,
-                win.inflate(0, self.thick).move(0, -self.thick), fgColor, bgColor)
+                win.inflate(0, self.thick).move(0,-self.thick/2), fgColor, bgColor)
             self.sbs.append(sb)
             self.group.add(sb)        
         if N in self.nsew or S in self.nsew:
             scrollRect = pygame.Rect(win.left, 0, win.width, initRect.height)
             sb = ScrollBar(worldSize[0], scrollRect, self.pane, 0,
-                win.inflate(self.thick, 0).move(-self.thick, 0), fgColor, bgColor)
+                win.inflate(self.thick, 0).move(-self.thick/2,0), fgColor, bgColor)
             self.sbs.append(sb)
             self.group.add(sb)
 
@@ -177,11 +173,13 @@ class ScrollBar(pygame.sprite.Sprite):
         self.knob = pygame.Rect(self.rect)
         self.ratio = 1.0* initRect.size[self.axis] / worldDim
         knoblist = list(self.knob.size)
-        knoblist[self.axis] = self.knob.size[self.axis] * self.ratio
+        knoblist[self.axis] = (self.knob.size[self.axis] * self.ratio)
         self.knob.size = knoblist
         self.draw(self.surface)
         self.scrolling = False
         self.leftTop = [0,0]
+        self.diff = [0,0]
+        self.diff[self.axis] = self.initTopleft[self.axis]
 
     def update(self, event):
         if event and event.type in [MOUSEMOTION, MOUSEBUTTONUP, MOUSEBUTTONDOWN]:
@@ -191,11 +189,11 @@ class ScrollBar(pygame.sprite.Sprite):
                 if step != 0:
                     self.leftTop[self.axis] += (step / self.ratio)
 
-            elif event.type is MOUSEBUTTONDOWN and (
-                self.knob.collidepoint(event.pos) and (
+            elif event.type is MOUSEBUTTONDOWN:
+                if self.knob.move(self.diff).collidepoint(event.pos) and (
                     self.exclude and not (
-                        self.exclude.collidepoint(event.pos)))):
-                self.scrolling = True                
+                        self.exclude.collidepoint(event.pos))):
+                    self.scrolling = True                
 
             elif event.type is MOUSEBUTTONUP:
                 self.scrolling = False
