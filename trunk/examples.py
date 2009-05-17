@@ -1,7 +1,7 @@
 import sys
 import pygame
 import ezscroll
-from ezscroll import N,S,E,W, ScrollBar, ScrollPane
+from ezscroll import N,S,E,W, ScrollBar, ScrollPane, BGCOLOR
 
 ScrSize = (300,600)
 Origin  = (0,0)
@@ -26,7 +26,7 @@ def examples():
     bg = pygame.Surface(ScrSize).convert()
     
     ###  EXAMPLE 1
-    bg.fill(Gray)
+    bg.fill(BGCOLOR)
     pygame.display.set_caption("Example 1:  ScrollPane")
     initRect = pygame.Rect(screen.get_rect())
     sp = ScrollPane(world.get_size(), initRect, world, bg, [S, W, N], 20, True)
@@ -37,7 +37,6 @@ def examples():
         event = pygame.event.wait()
         if event.type is pygame.QUIT: break       
         sp.update(event)
-##        sp.draw(bg) # not needed since ctor arg drawAtUpdate is True
         screen.blit(bg,Origin)
         pygame.display.flip()
 
