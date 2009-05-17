@@ -13,7 +13,10 @@ E='E'
 W='W'
 
 class ScrollPane():
-    """ Coordinates two ScrollBars """
+    """ Coordinates up to four scrollbars on a panel.
+    Uses two ScrollBars offset, and blits world view on top.
+    Same interface as sprite.Group: update() draw()
+    """
     
     def __init__(
         self,
@@ -25,6 +28,7 @@ class ScrollPane():
         thick=20,
         fgColor=FGCOLOR,
         bgColor=BGCOLOR):
+        """ Figures layout and inits ScrollBars """
 
         self.world = world
         self.pane = pane
@@ -33,23 +37,24 @@ class ScrollPane():
         self.thick = thick
 
         win = self.initViewRect(initRect, self.nsew, self.thick)
+        self.viewRect = win
         self.sprites = []
         if E in self.nsew or W in self.nsew:
             scrollRect = pygame.Rect(0, win.top, initRect.width, win.height)
-            exclude = win.inflate(0, self.thick).move(0,-self.thick/2)
+            exclude = win.inflate(0, self.thick).move(0,-self.thick//2)
             sb = ScrollBar(self.group, worldSize[1], scrollRect, self.pane, 1,
                            exclude, fgColor, bgColor)
             self.sprites.append(sb)
+
         if N in self.nsew or S in self.nsew:
             scrollRect = pygame.Rect(win.left, 0, win.width, initRect.height)
-            exclude = win.inflate(self.thick, 0).move(-self.thick/2,0)
+            exclude = win.inflate(self.thick, 0).move(-self.thick//2,0)
             sb = ScrollBar(self.group, worldSize[0], scrollRect, self.pane, 0,
                            exclude, fgColor, bgColor)
             self.sprites.append(sb)
-        self.viewRect = win
 
     def initViewRect(self, initRect, nsew, thick):
-        """ Subtract width of scrollbars from viewable area """
+        """ Used by init(), subtract width of scrollbars from viewable area """
         win = pygame.Rect(initRect)
         if N in nsew:
             win.top = thick
@@ -64,26 +69,29 @@ class ScrollPane():
         return win
 
     def clear(self, bg, archive):
-        pass
+        pass # todo
         
     def update(self, event):
+        """ Called by end user to update scroll state """
         for sb in self.sprites:
             sb.update(event)
             if sb.scrolling:
                 break
                 
     def draw(self, surface):
+        """ Called by end user to draw changes to the surface """
         offsets = [0,0]
+        changes = []
         for sb in self.sprites:
             offsets[sb.axis] = sb.get_offsets()[sb.axis]
-            sb.draw(surface)
-        # Comment out this blit to see just the scrollbars.    
-        surface.blit(self.world, self.viewRect.topleft,
-                     (offsets, self.viewRect.size))
-        return self.pane.get_rect()
+            changes.extend(sb.draw(surface))               
+            # Comment out this blit to see just the scrollbars.    
+            changes.append(surface.blit(self.world, self.viewRect.topleft,
+                        (offsets, self.viewRect.size)))
+        return changes
 
     def get_pane(self):
-        """ Called by end user to get the scroll pane """
+        """ Called by end user to get the scroll pane results """
         return self.pane
 
 
@@ -121,32 +129,33 @@ class ScrollBar(pygame.sprite.DirtySprite):
         self.leftTop = [0,0]
         self.diff = [0,0]
         self.diff[self.axis] = self.initTopleft[self.axis]
+        self.dirty = True
 ##        if self.drawAuto == True:
 ##            self.draw(self.surface) # todo 1 option for this 
 
     def update(self, event): # event must not be None
-        
-            if self.scrolling and event.type is MOUSEMOTION:
-                rel = self.scroll(event.rel)
-                if rel != 0:
-                    self.leftTop[self.axis] += (rel / self.ratio)
+        """ Called by user with mouse events. event must not be none. """        
+        if self.scrolling and event.type is MOUSEMOTION:
+            relax = self.scroll(event.rel[self.axis])
+            if relax != 0:
+                self.leftTop[self.axis] += (relax / self.ratio)
+                self.dirty = True
+                
+        elif event.type is MOUSEBUTTONDOWN and (
+            self.knob.move(self.diff).collidepoint(event.pos) and (
+                self.exclude and not (
+                    self.exclude.collidepoint(event.pos)))):
+            self.scrolling = True                
 
-            elif event.type is MOUSEBUTTONDOWN and (
-                self.knob.move(self.diff).collidepoint(event.pos) and (
-                    self.exclude and not (
-                        self.exclude.collidepoint(event.pos)))):
-                self.scrolling = True                
-
-            elif event.type is MOUSEBUTTONUP:
-                self.scrolling = False
+        elif event.type is MOUSEBUTTONUP:
+            self.scrolling = False
         
-    def scroll(self, rel):
-        """ Moves knob based on [x,y] change like mouse event rel
+    def scroll(self, relax):
+        """ Moves knob based on mouse events rel change along axis.
         Called internally by update(). Knob travel limited to track.
         """
-        if rel and rel[self.axis] != 0:
+        if relax and relax != 0:
             axis = self.axis
-            relax = rel[axis]
             rect = self.rect
             knob = self.knob
             knobMove = max(relax, rect.topleft[axis] - knob.topleft[axis])
@@ -160,20 +169,20 @@ class ScrollBar(pygame.sprite.DirtySprite):
 
     def draw(self, surface):
         """ Blits sprite image to a surface if it exists.
-        Called by update()>updateViews() if self.auto is True.
+        todo: Called by update()>updateViews() if self.auto is True.
         Also mimics group.draw, returning rectangle.
         """
-        pygame.draw.rect(self.image, self.bgColor, self.rect, 0) 
-        pygame.draw.rect(self.image, self.fgColor, self.knob, 0)        
-        if surface:
-            return surface.blit(self.image, self.initTopleft)
+        if self.dirty == True and surface is not None:
+            self.dirty = False
+            pygame.draw.rect(self.image, self.bgColor, self.rect, 0) 
+            pygame.draw.rect(self.image, self.fgColor, self.knob, 0)            
+            return [surface.blit(self.image, self.initTopleft)]
         else:
-            return None
+            return []
 
     def get_offsets(self):
         """ Called by end user to get pixels scrolled,
         as result of update()
-
         """
         return self.leftTop
 
