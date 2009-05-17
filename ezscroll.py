@@ -4,7 +4,6 @@ import sys
 import pygame
 from pygame import *
 
-
 FGCOLOR = 220,220,200
 BGCOLOR = 235,235,230
 N='N'
@@ -12,10 +11,11 @@ S='S'
 E='E'
 W='W'
 
+
 class ScrollPane():
     """ Coordinates up to four scrollbars on a panel.
     Uses two ScrollBars offset, and blits world view on top.
-    Same interface as sprite.Group: update() draw()
+    Use like a sprite group: update(), draw(). See examples.py
     """
     
     def __init__(
@@ -26,6 +26,7 @@ class ScrollPane():
         pane=None,
         nsew=[S,E],
         thick=20,
+        drawAtUpdate=False,        
         fgColor=FGCOLOR,
         bgColor=BGCOLOR):
         """ Figures layout and inits ScrollBars """
@@ -35,10 +36,11 @@ class ScrollPane():
         self.group = pygame.sprite.RenderUpdates()
         self.nsew = nsew
         self.thick = thick
+        self.drawAtUpdate = drawAtUpdate
 
         win = self.initViewRect(initRect, self.nsew, self.thick)
         self.viewRect = win
-        self.sprites = []
+        self.sprites = [] # the scrollbars
         if E in self.nsew or W in self.nsew:
             scrollRect = pygame.Rect(0, win.top, initRect.width, win.height)
             exclude = win.inflate(0, self.thick).move(0,-self.thick//2)
@@ -75,11 +77,11 @@ class ScrollPane():
         """ Called by end user to update scroll state """
         for sb in self.sprites:
             sb.update(event)
-            if sb.scrolling:
-                break
+        if self.drawAtUpdate:
+            self.draw(self.pane)
                 
     def draw(self, surface):
-        """ Called by end user to draw changes to the surface """
+        """ Called by end user to draw state to the surface """
         offsets = [0,0]
         changes = []
         for sb in self.sprites:
@@ -119,7 +121,7 @@ class ScrollBar(pygame.sprite.DirtySprite):
         self.surface = surface
         self.axis = axis
         self.fgColor = fgColor
-        self.bgColor = bgColor        
+        self.bgColor = bgColor
         self.knob = pygame.Rect(self.rect)
         self.ratio = 1.0* initRect.size[self.axis] / worldDim
         knoblist = list(self.knob.size)
@@ -130,8 +132,6 @@ class ScrollBar(pygame.sprite.DirtySprite):
         self.diff = [0,0]
         self.diff[self.axis] = self.initTopleft[self.axis]
         self.dirty = True
-##        if self.drawAuto == True:
-##            self.draw(self.surface) # todo 1 option for this 
 
     def update(self, event): # event must not be None
         """ Called by user with mouse events. event must not be none. """        
