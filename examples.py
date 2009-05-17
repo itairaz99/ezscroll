@@ -29,7 +29,7 @@ def examples():
     bg.fill(Gray)
     pygame.display.set_caption("Example 1:  ScrollPane")
     initRect = pygame.Rect(screen.get_rect())
-    sp = ScrollPane(world.get_size(), initRect, world, bg, [S, W, N])
+    sp = ScrollPane(world.get_size(), initRect, world, bg, [S, W, N], 20, True)
     sp.draw(bg)
     screen.blit(bg,Origin)
     pygame.display.flip()
@@ -37,7 +37,7 @@ def examples():
         event = pygame.event.wait()
         if event.type is pygame.QUIT: break       
         sp.update(event)
-        sp.draw(bg)
+##        sp.draw(bg) # not needed since ctor arg drawAtUpdate is True
         screen.blit(bg,Origin)
         pygame.display.flip()
 
