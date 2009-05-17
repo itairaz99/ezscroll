@@ -86,10 +86,13 @@ class ScrollPane():
         changes = []
         for sb in self.sprites:
             offsets[sb.axis] = sb.get_offsets()[sb.axis]
-            changes.extend(sb.draw(surface))               
+            changes.extend(sb.draw(surface))        
             # Comment out this blit to see just the scrollbars.    
+        if changes:
             changes.append(surface.blit(self.world, self.viewRect.topleft,
-                        (offsets, self.viewRect.size)))
+                    (offsets, self.viewRect.size)))
+            pygame.draw.rect(self.pane, BGCOLOR, self.viewRect.inflate(3,3).move(-1,-1), 3)
+            
         return changes
 
     def get_pane(self):
