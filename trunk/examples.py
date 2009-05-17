@@ -47,21 +47,23 @@ def examples():
     scrollRect = pygame.Rect(0, 0, ScrSize[0], thick)
     excludes = ((0, thick), ScrSize)
     group = pygame.sprite.RenderPlain()    
-    sb = ScrollBar(group, world.get_width(), scrollRect, bg, 0, excludes, (190,210,250))    
+    sb = ScrollBar(group, world.get_width(), scrollRect, bg, 0,
+                   excludes, (170,220,180), (240,210,225))    
     sb.draw(bg)
     bg.blit(world, (0,thick),
-        (sb.get_offsets(),(ScrSize[0],ScrSize[1]-thick)))   
+            (sb.get_offsets(),(ScrSize[0],ScrSize[1]-thick)))   
     screen.blit(bg, Origin)
     pygame.display.flip()
     while True:
         event = pygame.event.wait()
         if event.type is pygame.QUIT: break        
         sb.update(event)
-        sb.draw(bg)
-        bg.blit(world, (0,thick),
-            (sb.get_offsets(),(ScrSize[0],ScrSize[1]-thick)))
+        changes = sb.draw(bg)
+        if len(changes) > 0:
+            changes.append(bg.blit(world, (0,thick),
+                          (sb.get_offsets(),(ScrSize[0],ScrSize[1]-thick))))
         screen.blit(bg,Origin)
-        pygame.display.flip()
+        pygame.display.update(changes)
 
 
     pygame.quit()
