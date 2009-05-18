@@ -29,25 +29,28 @@ def examples():
     bg.fill(BGCOLOR)
     pygame.display.set_caption("Example 1:  ScrollPane")
     initRect = pygame.Rect(screen.get_rect())
-    sp = ScrollPane(world.get_size(), initRect, world, bg, [S, W, N], 20, True)
+    sp = ScrollPane(world.get_size(), initRect, world, bg, [S, W, N], 3, False, 20)
     sp.draw(bg)
     screen.blit(bg,Origin)
     pygame.display.flip()
     while True:
         event = pygame.event.wait()
-        if event.type is pygame.QUIT: break       
+        if event.type is pygame.QUIT: break
+        sp.clear()
         sp.update(event)
+        changes = sp.draw(bg)
         screen.blit(bg,Origin)
-        pygame.display.flip()
+        pygame.display.update(changes)
 
     ###  EXAMPLE 2
     pygame.display.set_caption("Example 2:    ScrollBar")
-    thick = 10
+    thick = 15
     scrollRect = pygame.Rect(0, 0, ScrSize[0], thick)
     excludes = ((0, thick), ScrSize)
     group = pygame.sprite.RenderPlain()    
     sb = ScrollBar(group, world.get_width(), scrollRect, bg, 0,
-                   excludes, (170,220,180), (240,210,225))    
+                   excludes, 4, False, 20,
+                   (170,220,180), (240,210,225), (255,255,0), (0,55,100))    
     sb.draw(bg)
     bg.blit(world, (0,thick),
             (sb.get_offsets(),(ScrSize[0],ScrSize[1]-thick)))   
