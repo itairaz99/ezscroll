@@ -109,7 +109,7 @@ class ScrollPane():
                     (offsets, self.viewRect.size))
         if self.pad and not self.pretty:
             pygame.draw.rect( #todo better pretty rect here
-                self.pane, self.loColor,
+                self.pane, self.bgColor,
                 self.viewRect.inflate(self.pad+1,self.pad+1), self.pad)
 
         return changes
@@ -211,6 +211,9 @@ class ScrollBar(pygame.sprite.DirtySprite):
                 self.drawPretty()
             else:
                 pygame.draw.rect(self.image, self.fgColor, self.knob, 0)
+                if self.pad:
+                    pygame.draw.rect(self.image,
+                                     self.bgColor, self.knob, self.pad)
             return [surface.blit(self.image, self.initTopleft)]
         else:
             return []
