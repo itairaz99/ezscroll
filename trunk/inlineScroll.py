@@ -9,6 +9,7 @@ Origin  = (0,0)
 Gray    = (200,200,200)
 Red     = (250,20,20)
 Blue    = (20,20,100)
+Buff    = (200,180,180)
 def main():
     """ A basic example of scrollknob code inline.
         Does not use ezscroll module.
@@ -62,7 +63,7 @@ def main():
                 
             screen.fill( (192,188,180) )
             screen.blit(world, ( (knob.left / ratio) * -1 , 0) )
-            pygame.draw.rect( screen, Gray, track, 0 )
+            pygame.draw.rect( screen, Buff, track, 0 )
             pygame.draw.rect( screen, Blue, knob.inflate(0,-5), 0 )
 
             pygame.display.flip()
