@@ -25,11 +25,13 @@ def examples():
             pygame.draw.circle(world, (225,34,43), (x,y), 100, 10)          
     bg = pygame.Surface(ScrSize).convert()
     
+
     ###  EXAMPLE 1
     bg.fill(BGCOLOR)
     pygame.display.set_caption("Example 1:  ScrollPane")
     initRect = pygame.Rect(screen.get_rect())
-    sp = ScrollPane(world.get_size(), initRect, world, bg, [S, W, N], 3, False, 20)
+    sp = ScrollPane(world.get_size(), initRect, world, bg,
+                    [S, W, N], 3, True, 20)
     sp.draw(bg)
     screen.blit(bg,Origin)
     pygame.display.flip()
@@ -42,18 +44,19 @@ def examples():
         screen.blit(bg,Origin)
         pygame.display.update(changes)
 
+
     ###  EXAMPLE 2
     pygame.display.set_caption("Example 2:    ScrollBar")
-    thick = 15
+    thick = 20
     scrollRect = pygame.Rect(0, 0, ScrSize[0], thick)
     excludes = ((0, thick), ScrSize)
     group = pygame.sprite.RenderPlain()    
-    sb = ScrollBar(group, world.get_width(), scrollRect, bg, 0,
-                   excludes, 4, False, 20,
-                   (170,220,180), (240,210,225), (255,255,0), (0,55,100))    
+    sb = ScrollBar(group, world.get_width(), scrollRect, bg,
+                   0, excludes, 4, True, thick,
+                   (170,220,180), (200,210,225), (240,240,250), (0,55,100))    
     sb.draw(bg)
     bg.blit(world, (0,thick),
-            (sb.get_offsets(),(ScrSize[0],ScrSize[1]-thick)))   
+            (sb.get_scrolled(),(ScrSize[0],ScrSize[1]-thick)))   
     screen.blit(bg, Origin)
     pygame.display.flip()
     while True:
@@ -63,7 +66,7 @@ def examples():
         changes = sb.draw(bg)
         if len(changes) > 0:
             changes.append(bg.blit(world, (0,thick),
-                          (sb.get_offsets(),(ScrSize[0],ScrSize[1]-thick))))
+                          (sb.get_scrolled(),(ScrSize[0],ScrSize[1]-thick))))
         screen.blit(bg,Origin)
         pygame.display.update(changes)
 
