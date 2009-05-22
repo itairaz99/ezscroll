@@ -98,7 +98,7 @@ class ScrollPane():
         offsets = [0,0]
         changes = []
         for sb in self.sprites:
-            offsets[sb.axis] = sb.get_offsets()[sb.axis]
+            offsets[sb.axis] = sb.get_scrolled()[sb.axis]
             if sb.dirty:
                 changes.extend(sb.draw(surface))
              
@@ -108,7 +108,7 @@ class ScrollPane():
             surface.blit(self.world, self.viewRect.topleft,
                     (offsets, self.viewRect.size))
         if self.pad and not self.pretty:
-            pygame.draw.rect( #todo better pretty rect here
+            pygame.draw.rect(
                 self.pane, self.bgColor,
                 self.viewRect.inflate(self.pad+1,self.pad+1), self.pad)
 
@@ -139,7 +139,7 @@ class ScrollBar(pygame.sprite.DirtySprite):
         bgColor=BGCOLOR,
         hiColor=HICOLOR,
         loColor=LOCOLOR):
-        
+
         pygame.sprite.Sprite.__init__(self,group)
         self.initTopleft = initRect.topleft
         self.exclude = pygame.Rect(exclude)
@@ -165,6 +165,11 @@ class ScrollBar(pygame.sprite.DirtySprite):
         self.pretty = pretty
         self.thick = thick
 
+        self.oppAxis = cmp(0,self.axis)+1
+        self.prettySize = [
+            self.knob.width - (pad *2), self.knob.height - (pad * 2)]
+        self.prettySize[self.oppAxis] = self.thick - (2*pad)
+ 
     def update(self, event): # event must not be None
         """ Called by user with mouse events. event must not be none. """        
         if self.scrolling and event.type is MOUSEMOTION:
@@ -172,7 +177,7 @@ class ScrollBar(pygame.sprite.DirtySprite):
             if relax != 0:
                 self.leftTop[self.axis] += (relax / self.ratio)
                 self.dirty = True
-                
+              
         elif event.type is MOUSEBUTTONDOWN and (
             self.knob.move(self.diff).collidepoint(event.pos) and (
                 self.exclude and not (
@@ -218,7 +223,7 @@ class ScrollBar(pygame.sprite.DirtySprite):
         else:
             return []
 
-    def get_offsets(self):
+    def get_scrolled(self):
         """ Called by end user to get pixels scrolled,
         as result of update()
         """
@@ -228,9 +233,10 @@ class ScrollBar(pygame.sprite.DirtySprite):
         for rect in rects:
             rect.move_ip(moves)
 
-    def drawRects(self,rectInfo, surface):
+    def drawRects(self,rectInfo, surf):
         for item in rectInfo:
-            pygame.draw.rect(surface, item[0], item[1], item[2])
+            pygame.draw.rect(surf, item[0], item[1], item[2])
+            
 
     def drawPretty(self):
 
@@ -244,25 +250,24 @@ class ScrollBar(pygame.sprite.DirtySprite):
         """
         axis = self.axis
         k = self.knob
-        surface = self.image
-        
-        oppAxis = cmp(0,axis)+1
+        surf = self.image
+        oppAxis = self.oppAxis
         pad = self.pad
         knob = self.knob
-        size = [knob.width - (pad *2), knob.height - (pad * 2)]
-        size[oppAxis] = self.thick - (2*pad)
-        hiRect = pygame.Rect((knob.left + pad, knob.top + pad), size)
+        psize = self.prettySize
+        hiRect = pygame.Rect((knob.left + pad, knob.top + pad), psize )
         loRect = hiRect.inflate(-1,-1).move(1,1)
         fgRect = loRect.inflate(-1,-1)
         rectInfo = ((self.hiColor, hiRect, 1),
                     (self.loColor, loRect, 1),
                     (self.fgColor, fgRect, 0))
         
-        self.drawRects(rectInfo, surface)            
+        self.drawRects(rectInfo, surf)            
         moves = [0,0]
-        moves[oppAxis] = knob.size[oppAxis] - size[oppAxis] - (2*pad)
-        self.moveRects((hiRect, loRect, fgRect), moves)
-        self.drawRects(rectInfo,surface)
+        moves[oppAxis] = knob.size[oppAxis] - psize[oppAxis] - (2*pad)
+        if moves[oppAxis] > 2 * self.thick:
+            self.moveRects((hiRect, loRect, fgRect), moves)
+            self.drawRects(rectInfo,surf)
 
 
         
