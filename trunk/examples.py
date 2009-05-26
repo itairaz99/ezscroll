@@ -97,7 +97,6 @@ def examples():
     ###  EXAMPLE 3
     import random
     pygame.display.set_caption("Example 3: ScrollBar")
-    thick = 20
     scrollRect = pygame.Rect(0, 0, thick,ScrSize[1])
     excludes = ((thick, 0), ScrSize) # rect where sb update is a pass
     group = pygame.sprite.RenderPlain()
@@ -109,10 +108,12 @@ def examples():
         1,
         excludes,
         4,
-        False,
+        True,
         thick,
         (120,120,160,10),
-        (88,57,99,214))
+        (88,57,99,214),
+        (240,240,250,20),
+        (0,55,100,50))  
     sb.draw(bg)
     bg.blit(world, (thick,0),(sb.get_scrolled(),
                               (ScrSize[0]-thick,ScrSize[1])))   
@@ -129,11 +130,9 @@ def examples():
         changes = sb.draw(bg)
         if len(changes) > 0:
             scrolled = sb.get_scrolled()
-            changes.append(bg.blit(
-                world,
-                (thick,0),
-                (scrolled[0]+thick,
-                scrolled[1],
+            changes.append(
+                bg.blit(world, (thick,0),
+                (scrolled[0], scrolled[1],
                 ScrSize[0],ScrSize[1])))
         screen.blit(bg,Origin)
         pygame.display.update(changes)
