@@ -48,8 +48,8 @@ class ScrollPane():
         self.hiColor = hiColor
         self.loColor = loColor
         
-        win = self.initViewRect(initRect, self.nsew, self.thick)
-        self.viewRect = win
+        self.viewRect = self.initViewRect(initRect, self.nsew, self.thick)
+        win = self.viewRect
         self.sprites = [] # the scrollbars
         if E in self.nsew or W in self.nsew:
             scrollRect = pygame.Rect(0, win.top, initRect.width, win.height)
@@ -67,8 +67,8 @@ class ScrollPane():
                            fgColor, bgColor, hiColor, loColor)
             self.sprites.append(sb)
 
-        self.clearArchive = pygame.Surface(initRect.size).convert()
-        self.clearArchive.fill((255,0,0))
+##        self.clearArchive = pygame.Surface(initRect.size).convert()
+##        self.clearArchive.fill((255,0,0))
 
     def initViewRect(self, initRect, nsew, thick):
         """ Used by init(), subtract width of scrollbars from viewable area """
@@ -86,7 +86,7 @@ class ScrollPane():
         return win
 
     def clear(self): #does nothing?
-        self.group.clear(self.pane, self.clearArchive)
+        pass # self.group.clear(self.pane, self.clearArchive)
         
     def update(self, event):
         """ Called by end user to update scroll state """
@@ -101,7 +101,6 @@ class ScrollPane():
             offsets[sb.axis] = sb.get_scrolled()[sb.axis]
             if sb.dirty:
                 changes.extend(sb.draw(surface))
-             
         if changes:
             # Comment out this blit to see just the scrollbars.
             # To date, don't add to changes since the sb includes it.
@@ -121,7 +120,7 @@ class ScrollPane():
 
 class ScrollBar(pygame.sprite.DirtySprite):
     """ Same interface as sprite.Group.
-    Get result of update() in pixels scrolled, from get_offsets()
+    Get result of update() in pixels scrolled, from get_scrolled()
     """
 
     def __init__(
@@ -152,7 +151,7 @@ class ScrollBar(pygame.sprite.DirtySprite):
         self.hiColor = hiColor
         self.loColor = loColor        
         self.knob = pygame.Rect(self.rect)
-        self.ratio = 1.0* initRect.size[self.axis] / worldDim
+        self.ratio = 1.0 * initRect.size[self.axis] / worldDim
         knoblist = list(self.knob.size)
         knoblist[self.axis] = (self.knob.size[self.axis] * self.ratio)
         self.knob.size = knoblist
@@ -164,26 +163,21 @@ class ScrollBar(pygame.sprite.DirtySprite):
         self.pad = pad
         self.pretty = pretty
         self.thick = thick
-
         self.oppAxis = cmp(0,self.axis)+1
         self.prettySize = [
-            self.knob.width - (pad *2), self.knob.height - (pad * 2)]
-        self.prettySize[self.oppAxis] = self.thick - (2*pad)
+            self.knob.width - (pad * 2), self.knob.height - (pad * 2)]
+        self.prettySize[self.oppAxis] = self.thick - (2 * pad)
  
     def update(self, event): # event must not be None
         """ Called by user with mouse events. event must not be none. """        
-        if self.scrolling and event.type is MOUSEMOTION:
-            relax = self.scroll(event.rel[self.axis])
-            if relax != 0:
-                self.leftTop[self.axis] += (relax / self.ratio)
-                self.dirty = True
-              
+        if event.type is MOUSEMOTION and self.scrolling:
+            self.scroll(event.rel[self.axis])
+        
         elif event.type is MOUSEBUTTONDOWN and (
-            self.knob.move(self.diff).collidepoint(event.pos) and (
-                self.exclude and not (
-                    self.exclude.collidepoint(event.pos)))):
-            self.scrolling = True                
-
+            self.knob.move(self.diff).collidepoint(event.pos) and not (
+                    self.exclude.collidepoint(event.pos))):
+            self.scrolling = True
+            
         elif event.type is MOUSEBUTTONUP:
             self.scrolling = False
         
@@ -195,14 +189,15 @@ class ScrollBar(pygame.sprite.DirtySprite):
             axis = self.axis
             rect = self.rect
             knob = self.knob
-            knobMove = max(numPixels, rect.topleft[axis] - knob.topleft[axis])
-            knobMove = min(knobMove, rect.bottomright[axis] - knob.bottomright[axis])
-            if knobMove != 0:
-                knobMoves = [0,0]
-                knobMoves[axis] = knobMove
-                self.knob.move_ip(knobMoves)
-                return knobMove
-        return 0      
+            knobMove = max(
+                numPixels, rect.topleft[axis] - knob.topleft[axis])
+            knobMove = min(
+                knobMove, rect.bottomright[axis] - knob.bottomright[axis])
+            knobMoves = [0,0]
+            knobMoves[axis] = knobMove
+            self.knob.move_ip(knobMoves)
+            self.leftTop[self.axis] += knobMove / self.ratio
+            self.dirty = True    
 
     def draw(self, surface):
         """ Blits sprite image to a surface if it exists.
@@ -240,16 +235,13 @@ class ScrollBar(pygame.sprite.DirtySprite):
 
     def drawPretty(self):
 
-        """ Used internally. Draws drop-shadowed knob if not pretty.
-
+        """ Used internally. Draws drop-shadowed knob if self.pretty
         This drawing method requires the rendering of 6 rects.
         Three for each knob end, overlapping HiColor, LoColor, FgColor
         Both are drawn regardless if hidden.
         Comment out the blit of world here to see exactly.
-
         """
         axis = self.axis
-        k = self.knob
         surf = self.image
         oppAxis = self.oppAxis
         pad = self.pad
@@ -260,12 +252,11 @@ class ScrollBar(pygame.sprite.DirtySprite):
         fgRect = loRect.inflate(-1,-1)
         rectInfo = ((self.hiColor, hiRect, 1),
                     (self.loColor, loRect, 1),
-                    (self.fgColor, fgRect, 0))
-        
+                    (self.fgColor, fgRect, 0))       
         self.drawRects(rectInfo, surf)            
         moves = [0,0]
-        moves[oppAxis] = knob.size[oppAxis] - psize[oppAxis] - (2*pad)
-        if moves[oppAxis] > 2 * self.thick:
+        moves[oppAxis] = knob.size[oppAxis] - psize[oppAxis] - (2 * pad)
+        if moves[oppAxis] > 2 * self.thick: # avoid overlapping bars
             self.moveRects((hiRect, loRect, fgRect), moves)
             self.drawRects(rectInfo,surf)
 
