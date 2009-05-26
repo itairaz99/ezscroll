@@ -4,7 +4,7 @@ import sys
 import pygame
 from pygame import *
 
-ScrSize = (300,600)
+ScrSize = (300,400)
 Origin  = (0,0)
 Gray    = (200,200,200)
 Red     = (250,20,20)
@@ -23,29 +23,26 @@ def main():
     for x in xrange(100, world.get_size()[0], 200):
         for y in xrange(100, world.get_size()[1], 200):
             pygame.draw.circle(world, Red, (x,y), 100, 10)          
-        
-    worldRect   = world.get_rect()
-    ratio       = (1.0 * screenRect.width) / worldRect.width
+
+######        
+    ratio       = (1.0 * screenRect.width) / world.get_width()
     scrollThick = 20
-    track = pygame.Rect(
-        screenRect.left,
-        screenRect.bottom - scrollThick,
-        screenRect.width, scrollThick )
-    
+    track = pygame.Rect(screenRect.left,screenRect.bottom - scrollThick,screenRect.width,scrollThick)   
     knob        = pygame.Rect(track)  
     knob.width   = track.width * ratio
     scrolling   = False
-
+######
+    
     while 1:
 
             event = pygame.event.wait()
+            screen.fill( (192,188,180) )
 
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()            
-            
-            elif ( event.type == MOUSEMOTION and
-                 scrolling):
+######            
+            elif ( event.type == MOUSEMOTION and scrolling):
 
                 if event.rel[0] != 0:
                     move = max(event.rel[0], track.left - knob.left)
@@ -59,13 +56,12 @@ def main():
                     
             elif event.type == MOUSEBUTTONUP:
                 scrolling = False
-
                 
-            screen.fill( (192,188,180) )
-            screen.blit(world, ( (knob.left / ratio) * -1 , 0) )
-            pygame.draw.rect( screen, Buff, track, 0 )
-            pygame.draw.rect( screen, Blue, knob.inflate(0,-5), 0 )
-
+            screen.blit(world, ((knob.left / ratio) * -1 , 0))
+            pygame.draw.rect(screen, Buff, track, 0 )
+            pygame.draw.rect(screen, Blue, knob.inflate(0,-5), 2)
+######
+            
             pygame.display.flip()
 
 ### Tells what to launch in IDE and windows double click of file.
